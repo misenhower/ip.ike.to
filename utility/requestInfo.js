@@ -34,12 +34,28 @@ async function getRequestInfo(req) {
   let userAgent = req.headers['user-agent'];
 
   // Get the other headers
-  let headers = JSON.parse(JSON.stringify(req.headers));
-  for (let key in headers) {
-    // Remove all X-* headers
-    if (key.startsWith('x-'))
-      delete headers[key];
+  let headers = [];
+  for (let key in req.headers) {
+    let value = req.headers[key];
+
+    switch (key) {
+      case 'connection':
+      case 'x-real-ip':
+      case 'x-forwarded-for':
+      case 'x-forwarded-proto':
+      case 'x-forwarded-ssl':
+      case 'x-forwarded-port':
+        continue;
+      case 'x-forwarded-connection':
+        key = 'connection';
+        break;
+    }
+
+    headers.push({ key, value });
   }
+
+  // Sort the headers
+  headers.sort((a, b) => a.key.localeCompare(b.key));
 
   return { ip, kind, host, userAgent, headers };
 }
