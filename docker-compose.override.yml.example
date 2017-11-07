@@ -1,0 +1,20 @@
+version: '2'
+
+# This adds config options for use with nginx-proxy:
+# https://github.com/jwilder/nginx-proxy
+
+services:
+
+  nginx:
+    environment:
+      VIRTUAL_HOST: ip.ike.to,www.ip.ike.to,ipv6.ike.to,www.ipv6.ike.to
+    networks:
+      - default
+      - nginx-proxy
+#    ports:
+#      - "80:80"
+
+networks:
+  nginx-proxy:
+    external:
+      name: nginxproxy_default

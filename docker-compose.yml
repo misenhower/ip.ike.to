@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+
+  app:
+    image: node:8
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: 'yarn start'
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    links:
+      - app
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./logs:/logs
+      - ./public:/usr/share/nginx/html:ro
