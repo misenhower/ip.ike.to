@@ -33,8 +33,13 @@ async function getRequestInfo(req) {
   // Get the user agent
   let userAgent = req.headers['user-agent'];
 
-  // Get the other headers (we may need to filter these in the future)
-  let headers = req.headers;
+  // Get the other headers
+  let headers = JSON.parse(JSON.stringify(req.headers));
+  for (let key in headers) {
+    // Remove all X-* headers
+    if (key.startsWith('x-'))
+      delete headers[key];
+  }
 
   return { ip, kind, host, userAgent, headers };
 }
