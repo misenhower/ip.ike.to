@@ -12,6 +12,10 @@ body {
   margin: 0.25em 0;
 }
 
+.ip#ipv6 {
+  font-size: 2em;
+}
+
 .user-agent {
   font-weight: normal;
 }
