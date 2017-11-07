@@ -47,8 +47,10 @@ async function getRequestInfo(req) {
       case 'x-forwarded-port':
         continue;
       case 'x-forwarded-connection':
-        key = 'connection';
-        break;
+        // key = 'connection';
+        // break;
+        // TODO: Work out issues with connection header
+        continue;
     }
 
     headers.push({ key, value });
