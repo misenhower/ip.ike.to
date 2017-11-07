@@ -1,4 +1,8 @@
-<h1 class="ip" title="IP Address">{{ title }}</h1>
+<h1 class="ip" title="IP Address">
+  {{ title }}
+</h1>
+
+<h1 class="ip" id="ipv6" title="IPv6 Address"></h1>
 
 {{#if host}}
   <h2 class="host" title="Hostname">{{ host }}</h2>
@@ -6,4 +10,19 @@
 
 {{#if userAgent}}
   <h3 class="user-agent" title="User Agent">{{ userAgent }}</h3>
+{{/if}}
+
+{{#if ipv4}}
+<script>
+if (window.fetch) {
+  window.fetch('http://ipv6.ike.to/api/ip')
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (info) {
+      document.getElementById('ipv6').innerHTML = info.ip;
+    })
+    .catch(function (err) { console.error(err); });
+}
+</script>
 {{/if}}

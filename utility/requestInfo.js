@@ -1,4 +1,5 @@
 const dns = require('dns');
+const ipaddr = require('ipaddr.js');
 
 function reverseDns(ip) {
   return new Promise((resolve, reject) => {
@@ -14,6 +15,13 @@ async function getRequestInfo(req) {
   // Get the IP
   let ip = req.ip;
 
+  // Determine IP kind (IPv4/IPv6)
+  let kind = null;
+  try {
+    let addr = ipaddr.parse(ip);
+    kind = addr.kind();
+  } catch (e) { }
+
   // Get the host
   let host = null;
 
@@ -25,7 +33,7 @@ async function getRequestInfo(req) {
   // Get the user agent
   let userAgent = req.headers['user-agent'];
 
-  return { ip, host, userAgent };
+  return { ip, kind, host, userAgent };
 }
 
 module.exports.getRequestInfo = getRequestInfo;

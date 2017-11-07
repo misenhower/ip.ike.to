@@ -1,5 +1,6 @@
 body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  padding-top: 0.75em;
 }
 
 .ip, .host, .user-agent {
@@ -8,7 +9,7 @@ body {
 
 .ip {
   font-size: 3.5em;
-  margin-bottom: 0.25em;
+  margin: 0.25em 0;
 }
 
 .user-agent {
