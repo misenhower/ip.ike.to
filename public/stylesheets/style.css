@@ -7,5 +7,10 @@ body {
 }
 
 .ip {
-  font-size: 3em;
+  font-size: 3.5em;
+  margin-bottom: 0.25em;
+}
+
+.user-agent {
+  font-weight: normal;
 }
