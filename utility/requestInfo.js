@@ -33,7 +33,10 @@ async function getRequestInfo(req) {
   // Get the user agent
   let userAgent = req.headers['user-agent'];
 
-  return { ip, kind, host, userAgent };
+  // Get the other headers (we may need to filter these in the future)
+  let headers = req.headers;
+
+  return { ip, kind, host, userAgent, headers };
 }
 
 module.exports.getRequestInfo = getRequestInfo;

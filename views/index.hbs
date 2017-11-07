@@ -12,6 +12,15 @@
   <h3 class="user-agent" title="User Agent">{{ userAgent }}</h3>
 {{/if}}
 
+<table class="headers"  width="100%">
+  {{#each headers as |value key|}}
+    <tr>
+      <td class="key">{{ key }}</td>
+      <td class="value mono">{{ value }}</td>
+    </tr>
+  {{/each}}
+</table>
+
 {{#if ipv4}}
 <script>
 if (window.fetch) {

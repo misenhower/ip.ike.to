@@ -4,7 +4,7 @@ var { getRequestInfo } = require('../utility/requestInfo');
 
 /* GET home page. */
 router.get('/', async function(req, res, next) {
-  let { ip, kind, host, userAgent } = await getRequestInfo(req);
+  let { ip, kind, host, userAgent, headers } = await getRequestInfo(req);
 
   res.render('index', {
     title: ip,
@@ -13,6 +13,7 @@ router.get('/', async function(req, res, next) {
     ipv4: kind === 'ipv4',
     host,
     userAgent,
+    headers,
   });
 });
 
