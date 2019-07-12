@@ -38,6 +38,11 @@ async function getRequestInfo(req) {
   for (let key in req.headers) {
     let value = req.headers[key];
 
+    // Hide CloudFlare headers
+    if (key.indexOf('cf-') === 0) {
+      continue;
+    }
+
     switch (key) {
       case 'connection':
       case 'x-real-ip':
