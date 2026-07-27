@@ -140,6 +140,10 @@ describe("HTML route", () => {
       /<h1 class="ip" id="ipv6" title="IPv6 Address">2001:db8::7<\/h1>/,
     );
     assert.match(body, /https:\/\/ipv4\.ike\.to\/api\/ip/);
+    assert.match(
+      body,
+      /document\.title\s*=\s*info\.ip \+ " \/ " \+ document\.getElementById\("ipv6"\)\.textContent/,
+    );
     assert.ok(ipv4Position >= 0);
     assert.ok(ipv4Position < ipv6Position);
   });

@@ -126,6 +126,8 @@ function renderPage({ ip, host, userAgent, headers }) {
           .then(function (response) { return response.json(); })
           .then(function (info) {
             document.getElementById("ipv4").textContent = info.ip;
+            document.title =
+              info.ip + " / " + document.getElementById("ipv6").textContent;
           })
           .catch(function (error) { console.error(error); });
       </script>`;
