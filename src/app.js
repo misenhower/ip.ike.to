@@ -137,7 +137,7 @@ function renderPage({ ip, host, userAgent, headers }) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(ip)}</title>
-    <link rel="stylesheet" href="/stylesheets/style.css?v=2">
+    <link rel="stylesheet" href="/stylesheets/style.css?v=3">
   </head>
   <body>
     ${addressSummary}

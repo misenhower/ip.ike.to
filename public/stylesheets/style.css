@@ -80,10 +80,10 @@ body {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --panel: #172033;
-    --foreground: #f1f5f9;
-    --muted: #cbd5e1;
-    --border: #334155;
+    --background: #181817;
+    --panel: #232321;
+    --foreground: #f1f0ec;
+    --muted: #bbb9b2;
+    --border: #3d3c38;
   }
 }

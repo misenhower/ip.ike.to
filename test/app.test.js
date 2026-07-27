@@ -95,7 +95,7 @@ describe("HTML route", () => {
     );
     assert.match(
       body,
-      /<link rel="stylesheet" href="\/stylesheets\/style\.css\?v=2">/,
+      /<link rel="stylesheet" href="\/stylesheets\/style\.css\?v=3">/,
     );
     assert.match(
       body,
