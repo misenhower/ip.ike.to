@@ -95,6 +95,10 @@ describe("HTML route", () => {
     );
     assert.match(
       body,
+      /<link rel="stylesheet" href="\/stylesheets\/style\.css\?v=2">/,
+    );
+    assert.match(
+      body,
       /<h1 class="ip" id="ipv4" title="IPv4 Address">203\.0\.113\.7<\/h1>/,
     );
     assert.match(body, /&lt;ptr\.example&gt;/);
