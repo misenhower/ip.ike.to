@@ -53,16 +53,17 @@ Test the generated domain before changing public DNS.
 
 ## Add the production domains
 
-Add both `ip.ike.to` and `ipv6.ike.to` to the Fastly service and provision
+Add both `ip.ike.to` and `ipv4.ike.to` to the Fastly service and provision
 Fastly-managed TLS for them. Complete any certificate-validation DNS records
 before cutting over traffic.
 
 In Cloudflare DNS, use the addresses displayed by the domains' Fastly TLS
 configuration:
 
-- `ip.ike.to`: Fastly **A records only**; no AAAA record
-- `ipv6.ike.to`: Fastly **AAAA records only**; no A record
+- `ip.ike.to`: the assigned Fastly **CNAME**, providing IPv4 and IPv6
+- `ipv4.ike.to`: the assigned Fastly **A records only**; no AAAA record
 - Proxy status for both: **DNS only**
 
-Do not use a dual-stack Fastly CNAME. The explicit record families are what
-guarantee that the first hostname reports IPv4 and the second reports IPv6.
+An IPv4 request renders its address directly. An IPv6 request renders the IPv6
+address as secondary information and loads JavaScript that retrieves the
+visitor's IPv4 address from `ipv4.ike.to`, placing it in the larger first line.

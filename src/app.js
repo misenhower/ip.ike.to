@@ -114,18 +114,22 @@ function renderPage({ ip, host, userAgent, headers }) {
     )
     .join("");
 
-  const ipv6Lookup = isIpv4(ip)
-    ? `
-      <h1 class="ip" id="ipv6" title="IPv6 Address"></h1>
+  let addressSummary = `<h1 class="ip" title="IP Address">${escapeHtml(ip)}</h1>`;
+
+  if (isIpv4(ip)) {
+    addressSummary = `<h1 class="ip" id="ipv4" title="IPv4 Address">${escapeHtml(ip)}</h1>`;
+  } else if (isIpv6(ip)) {
+    addressSummary = `<h1 class="ip" id="ipv4" title="IPv4 Address"></h1>
+      <h1 class="ip" id="ipv6" title="IPv6 Address">${escapeHtml(ip)}</h1>
       <script>
-        window.fetch("https://ipv6.ike.to/api/ip")
+        window.fetch("https://ipv4.ike.to/api/ip")
           .then(function (response) { return response.json(); })
           .then(function (info) {
-            document.getElementById("ipv6").textContent = info.ip;
+            document.getElementById("ipv4").textContent = info.ip;
           })
           .catch(function (error) { console.error(error); });
-      </script>`
-    : "";
+      </script>`;
+  }
 
   return `<!DOCTYPE html>
 <html>
@@ -136,8 +140,7 @@ function renderPage({ ip, host, userAgent, headers }) {
     <link rel="stylesheet" href="/stylesheets/style.css">
   </head>
   <body>
-    <h1 class="ip" title="IP Address">${escapeHtml(ip)}</h1>
-    ${ipv6Lookup}
+    ${addressSummary}
     ${host ? `<h2 class="host" title="Hostname">${escapeHtml(host)}</h2>` : ""}
     ${
       userAgent
@@ -153,6 +156,10 @@ function renderPage({ ip, host, userAgent, headers }) {
 
 function isIpv4(ip) {
   return ip.includes(".") && !ip.includes(":");
+}
+
+function isIpv6(ip) {
+  return ip.includes(":");
 }
 
 function normalizedPathname(pathname) {

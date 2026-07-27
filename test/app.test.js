@@ -84,14 +84,17 @@ describe("HTML route", () => {
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /^text\/html/);
     assert.equal(response.headers.get("cache-control"), "private, no-store");
-    assert.match(body, /203\.0\.113\.7/);
+    assert.match(
+      body,
+      /<h1 class="ip" id="ipv4" title="IPv4 Address">203\.0\.113\.7<\/h1>/,
+    );
     assert.match(body, /&lt;ptr\.example&gt;/);
     assert.match(body, /&lt;script src=&quot;bad\.js&quot;&gt;/);
     assert.match(body, /x-custom/);
     assert.match(body, /&lt;custom&gt;/);
     assert.doesNotMatch(body, /spoofed-edge-header/);
     assert.doesNotMatch(body, /198\.51\.100\.9/);
-    assert.match(body, /https:\/\/ipv6\.ike\.to\/api\/ip/);
+    assert.doesNotMatch(body, /window\.fetch/);
   });
 
   it("still renders when reverse DNS has no result", async () => {
@@ -106,16 +109,32 @@ describe("HTML route", () => {
     assert.match(await response.text(), /203\.0\.113\.7/);
   });
 
-  it("does not request a second address for IPv6 visitors", async () => {
+  it("loads IPv4 above the IPv6 address only for IPv6 visitors", async () => {
     const response = await appWithHostname()(
       request("/"),
       "2001:db8::7",
     );
+    const body = await response.text();
+    const ipv4Position = body.indexOf('id="ipv4"');
+    const ipv6Position = body.indexOf('id="ipv6"');
 
-    assert.doesNotMatch(
-      await response.text(),
-      /https:\/\/ipv6\.ike\.to\/api\/ip/,
+    assert.match(
+      body,
+      /<h1 class="ip" id="ipv4" title="IPv4 Address"><\/h1>/,
     );
+    assert.match(
+      body,
+      /<h1 class="ip" id="ipv6" title="IPv6 Address">2001:db8::7<\/h1>/,
+    );
+    assert.match(body, /https:\/\/ipv4\.ike\.to\/api\/ip/);
+    assert.ok(ipv4Position >= 0);
+    assert.ok(ipv4Position < ipv6Position);
+  });
+
+  it("does not load the IPv4 lookup without an IPv6 client address", async () => {
+    const response = await appWithHostname()(request("/"));
+
+    assert.doesNotMatch(await response.text(), /window\.fetch/);
   });
 });
 
