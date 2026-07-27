@@ -21,10 +21,13 @@ one-second timeout and a `null` hostname fallback.
 
 ## Run locally
 
-Requires Node.js 22 or newer.
+Requires Node.js 24.12 or newer. The repository's `.nvmrc` selects the current
+Node.js 24 LTS release when using nvm.
 
 ```sh
-npm install
+nvm use
+npm install --global "$(node -p 'require("./package.json").packageManager')"
+npm ci
 npm test
 npm run dev
 ```
