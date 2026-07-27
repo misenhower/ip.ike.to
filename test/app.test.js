@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 import { createApp } from "../src/app.js";
 
 const clientIp = "203.0.113.7";
+const stylesheet = await readFile(
+  new URL("../public/stylesheets/style.css", import.meta.url),
+  "utf8",
+);
 
 function request(path = "/", options = {}) {
   const headers = new Headers(options.headers);
@@ -86,6 +91,10 @@ describe("HTML route", () => {
     assert.equal(response.headers.get("cache-control"), "private, no-store");
     assert.match(
       body,
+      /<meta name="viewport" content="width=device-width, initial-scale=1">/,
+    );
+    assert.match(
+      body,
       /<h1 class="ip" id="ipv4" title="IPv4 Address">203\.0\.113\.7<\/h1>/,
     );
     assert.match(body, /&lt;ptr\.example&gt;/);
@@ -139,6 +148,20 @@ describe("HTML route", () => {
 });
 
 describe("static assets", () => {
+  it("keeps long values within narrow viewports", () => {
+    assert.match(stylesheet, /font-size:\s*clamp\(/);
+    assert.match(stylesheet, /overflow-wrap:\s*anywhere/);
+    assert.match(stylesheet, /table-layout:\s*fixed/);
+  });
+
+  it("follows the system dark-mode preference", () => {
+    assert.match(
+      stylesheet,
+      /@media \(prefers-color-scheme: dark\)/,
+    );
+    assert.match(stylesheet, /color-scheme:\s*light dark/);
+  });
+
   it("serves the bundled stylesheet", async () => {
     const response = await appWithHostname()(
       request("/stylesheets/style.css"),
