@@ -95,12 +95,22 @@ describe("HTML route", () => {
     );
     assert.match(
       body,
-      /<link rel="stylesheet" href="\/stylesheets\/style\.css\?v=3">/,
+      /<link rel="stylesheet" href="\/stylesheets\/style\.css\?v=8">/,
     );
     assert.match(
       body,
-      /<h1 class="ip" id="ipv4" title="IPv4 Address">203\.0\.113\.7<\/h1>/,
+      /<h1 class="ip" id="ipv4" title="IPv4 Address"><button class="copy-value copy-value--centered"/,
     );
+    assert.match(body, /aria-label="Copy IPv4 address"/);
+    assert.match(body, /<span class="copy-text">203\.0\.113\.7<\/span>/);
+    assert.match(body, /aria-label="Copy hostname"/);
+    assert.match(body, /aria-label="Copy user agent"/);
+    assert.match(body, /aria-label="Copy x-custom header"/);
+    assert.match(body, /class="copy-value copy-value--cell"/);
+    assert.match(body, /event\.target\.closest\("\.headers \.value"\)/);
+    assert.match(body, /navigator\.clipboard\.writeText\(text\)/);
+    assert.match(body, /document\.execCommand\("copy"\)/);
+    assert.match(body, /<p class="copy-status" aria-live="polite"><\/p>/);
     assert.match(body, /&lt;ptr\.example&gt;/);
     assert.match(body, /&lt;script src=&quot;bad\.js&quot;&gt;/);
     assert.match(body, /x-custom/);
@@ -133,16 +143,20 @@ describe("HTML route", () => {
 
     assert.match(
       body,
-      /<h1 class="ip" id="ipv4" title="IPv4 Address"><\/h1>/,
+      /<h1 class="ip" id="ipv4" title="IPv4 Address" hidden>/,
     );
+    assert.match(body, /aria-label="Copy IPv4 address"/);
     assert.match(
       body,
-      /<h1 class="ip" id="ipv6" title="IPv6 Address">2001:db8::7<\/h1>/,
+      /<h1 class="ip" id="ipv6" title="IPv6 Address"><button class="copy-value copy-value--centered"/,
     );
+    assert.match(body, /aria-label="Copy IPv6 address"/);
+    assert.match(body, /<span class="copy-text">2001:db8::7<\/span>/);
     assert.match(body, /https:\/\/ipv4\.ike\.to\/api\/ip/);
+    assert.match(body, /ipv4Element\.hidden = false/);
     assert.match(
       body,
-      /document\.title\s*=\s*info\.ip \+ " \/ " \+ document\.getElementById\("ipv6"\)\.textContent/,
+      /document\.getElementById\("ipv6"\)\.querySelector\("\.copy-text"\)\.textContent/,
     );
     assert.ok(ipv4Position >= 0);
     assert.ok(ipv4Position < ipv6Position);
@@ -160,6 +174,22 @@ describe("static assets", () => {
     assert.match(stylesheet, /font-size:\s*clamp\(/);
     assert.match(stylesheet, /overflow-wrap:\s*anywhere/);
     assert.match(stylesheet, /table-layout:\s*fixed/);
+  });
+
+  it("reveals copy controls without shifting centered values", () => {
+    assert.match(
+      stylesheet,
+      /\.copy-value--centered \.copy-icon\s*{[^}]*position:\s*absolute/s,
+    );
+    assert.match(
+      stylesheet,
+      /\.copy-value--cell\s*{[^}]*display:\s*block[^}]*width:\s*100%/s,
+    );
+    assert.match(
+      stylesheet,
+      /\.copy-value--cell \.copy-icon\s*{[^}]*position:\s*absolute[^}]*top:\s*0\.5em[^}]*right:\s*0\.5em/s,
+    );
+    assert.match(stylesheet, /\.copy-value:hover \.copy-icon/);
   });
 
   it("follows the system dark-mode preference", () => {
