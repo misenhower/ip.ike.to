@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createWorker } from "../src/index.js";
+import { createApp } from "../src/app.js";
 
 const clientIp = "203.0.113.7";
 
 function request(path = "/", options = {}) {
   const headers = new Headers(options.headers);
-  headers.set("CF-Connecting-IP", options.ip ?? clientIp);
   headers.set("user-agent", options.userAgent ?? "Test Browser");
 
   return new Request(`https://ip.ike.to${path}`, {
@@ -16,15 +15,16 @@ function request(path = "/", options = {}) {
   });
 }
 
-function workerWithHostname(hostname = "example.test") {
-  return createWorker({
+function appWithHostname(hostname = "example.test") {
+  return createApp({
     reverseDns: async () => hostname,
+    stylesheet: new TextEncoder().encode("body { color: #333; }"),
   });
 }
 
 describe("IP address routes", () => {
   it("returns the client IP as plain text", async () => {
-    const response = await workerWithHostname().fetch(request("/txt"));
+    const response = await appWithHostname()(request("/txt"), clientIp);
 
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /^text\/plain/);
@@ -33,7 +33,7 @@ describe("IP address routes", () => {
   });
 
   it("returns the client IP as CORS-enabled JSON", async () => {
-    const response = await workerWithHostname().fetch(request("/api/ip"));
+    const response = await appWithHostname()(request("/api/ip"), clientIp);
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("access-control-allow-origin"), "*");
@@ -42,8 +42,9 @@ describe("IP address routes", () => {
   });
 
   it("returns request information as CORS-enabled JSON", async () => {
-    const response = await workerWithHostname("ptr.example.test").fetch(
+    const response = await appWithHostname("ptr.example.test")(
       request("/api"),
+      clientIp,
     );
 
     assert.equal(response.status, 200);
@@ -56,26 +57,27 @@ describe("IP address routes", () => {
   });
 
   it("accepts the trailing slashes supported by the original Express routes", async () => {
-    const worker = workerWithHostname();
+    const app = appWithHostname();
 
-    assert.equal((await worker.fetch(request("/txt/"))).status, 200);
-    assert.equal((await worker.fetch(request("/api/"))).status, 200);
-    assert.equal((await worker.fetch(request("/api/ip/"))).status, 200);
+    assert.equal((await app(request("/txt/"), clientIp)).status, 200);
+    assert.equal((await app(request("/api/"), clientIp)).status, 200);
+    assert.equal((await app(request("/api/ip/"), clientIp)).status, 200);
   });
 });
 
 describe("HTML route", () => {
   it("renders request information and hides proxy headers", async () => {
-    const response = await workerWithHostname("<ptr.example>").fetch(
+    const response = await appWithHostname("<ptr.example>")(
       request("/", {
         userAgent: '<script src="bad.js"></script>',
         headers: {
           accept: "text/html",
-          "cf-ray": "secret-edge-header",
+          "fastly-client-ip": "spoofed-edge-header",
           "x-custom": "<custom>",
           "x-forwarded-for": "198.51.100.9",
         },
       }),
+      clientIp,
     );
     const body = await response.text();
 
@@ -87,25 +89,27 @@ describe("HTML route", () => {
     assert.match(body, /&lt;script src=&quot;bad\.js&quot;&gt;/);
     assert.match(body, /x-custom/);
     assert.match(body, /&lt;custom&gt;/);
-    assert.doesNotMatch(body, /secret-edge-header/);
+    assert.doesNotMatch(body, /spoofed-edge-header/);
     assert.doesNotMatch(body, /198\.51\.100\.9/);
     assert.match(body, /https:\/\/ipv6\.ike\.to\/api\/ip/);
   });
 
   it("still renders when reverse DNS has no result", async () => {
-    const worker = createWorker({
+    const app = createApp({
       reverseDns: async () => null,
+      stylesheet: new Uint8Array(),
     });
 
-    const response = await worker.fetch(request("/"));
+    const response = await app(request("/"), clientIp);
 
     assert.equal(response.status, 200);
     assert.match(await response.text(), /203\.0\.113\.7/);
   });
 
   it("does not request a second address for IPv6 visitors", async () => {
-    const response = await workerWithHostname().fetch(
-      request("/", { ip: "2001:db8::7" }),
+    const response = await appWithHostname()(
+      request("/"),
+      "2001:db8::7",
     );
 
     assert.doesNotMatch(
@@ -115,13 +119,26 @@ describe("HTML route", () => {
   });
 });
 
+describe("static assets", () => {
+  it("serves the bundled stylesheet", async () => {
+    const response = await appWithHostname()(
+      request("/stylesheets/style.css"),
+      clientIp,
+    );
+
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type"), /^text\/css/);
+    assert.equal(await response.text(), "body { color: #333; }");
+  });
+});
+
 describe("unmatched requests", () => {
   it("returns 404 for unknown paths and unsupported methods", async () => {
-    const worker = workerWithHostname();
+    const app = appWithHostname();
 
-    assert.equal((await worker.fetch(request("/missing"))).status, 404);
+    assert.equal((await app(request("/missing"), clientIp)).status, 404);
     assert.equal(
-      (await worker.fetch(request("/api", { method: "POST" }))).status,
+      (await app(request("/api", { method: "POST" }), clientIp)).status,
       404,
     );
   });

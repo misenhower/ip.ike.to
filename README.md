@@ -1,6 +1,6 @@
 # ip.ike.to
 
-A fetch-style Cloudflare Worker that reports the visitor's IP address, reverse
+A Fastly Compute application that reports the visitor's IP address, reverse
 DNS hostname, user agent, and request headers.
 
 ## Routes
@@ -15,6 +15,10 @@ DNS hostname, user agent, and request headers.
 The JSON routes allow cross-origin GET requests. All dynamic responses use
 `Cache-Control: private, no-store` because they contain visitor-specific data.
 
+Fastly supplies the client IP directly from the incoming connection. Reverse
+DNS uses a PTR query against Cloudflare's DNS-over-HTTPS endpoint, with a
+one-second timeout and a `null` hostname fallback.
+
 ## Run locally
 
 Requires Node.js 22 or newer.
@@ -25,23 +29,40 @@ npm test
 npm run dev
 ```
 
-Wrangler serves the application at `http://localhost:8787` by default. The CSS
-under `public/` is served as a static Worker asset.
+Fastly's local server listens at `http://127.0.0.1:7676` by default. The local
+client IP is `127.0.0.1`, so reverse DNS normally returns `null` locally.
 
 ## Deploy
 
+Authenticate the Fastly CLI without putting a token in the repository:
+
 ```sh
+npx fastly auth login
 npm run deploy
 ```
 
-The initial deployment uses a `workers.dev` address. After verifying it, add
-`ip.ike.to` and `ipv6.ike.to` as Worker custom domains in the Cloudflare
-dashboard. Keeping custom-domain routing out of `wrangler.jsonc` makes the DNS
-cutover a deliberate final step.
+On the first deployment, accept the generated `edgecompute.app` domain and the
+preconfigured `cloudflare_dns` backend. The backend must use:
 
-Cloudflare Workers Builds can connect this repository to GitHub and run
-`npx wrangler deploy` whenever the production branch changes.
+- Address and override host: `cloudflare-dns.com`
+- Port: `443`
+- TLS: enabled
+- Certificate and SNI hostname: `cloudflare-dns.com`
 
-The `ipv6.ike.to` hostname is expected to reach the same Worker. Cloudflare
-custom domains are normally dual-stack, so the browser—not the Worker—chooses
-whether that secondary request uses IPv4 or IPv6.
+Test the generated domain before changing public DNS.
+
+## Add the production domains
+
+Add both `ip.ike.to` and `ipv6.ike.to` to the Fastly service and provision
+Fastly-managed TLS for them. Complete any certificate-validation DNS records
+before cutting over traffic.
+
+In Cloudflare DNS, use the addresses displayed by the domains' Fastly TLS
+configuration:
+
+- `ip.ike.to`: Fastly **A records only**; no AAAA record
+- `ipv6.ike.to`: Fastly **AAAA records only**; no A record
+- Proxy status for both: **DNS only**
+
+Do not use a dual-stack Fastly CNAME. The explicit record families are what
+guarantee that the first hostname reports IPv4 and the second reports IPv6.

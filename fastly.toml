@@ -1,0 +1,21 @@
+# This file describes a Fastly Compute package.
+# https://www.fastly.com/documentation/reference/compute/fastly-toml/
+
+authors = ["misenhower"]
+description = "Reports the visitor's IP address and request information."
+language = "javascript"
+manifest_version = 3
+name = "ip.ike.to"
+
+[scripts]
+build = "npm run build"
+
+[local_server.backends.cloudflare_dns]
+url = "https://cloudflare-dns.com"
+override_host = "cloudflare-dns.com"
+cert_host = "cloudflare-dns.com"
+
+[setup.backends.cloudflare_dns]
+address = "cloudflare-dns.com"
+description = "Cloudflare DNS-over-HTTPS resolver"
+port = 443
