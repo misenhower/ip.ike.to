@@ -41,6 +41,18 @@ npx fastly auth login
 npm run deploy
 ```
 
+Pushes to `main` also run the tests and deploy automatically through GitHub
+Actions. Create a dedicated Fastly automation token with `global` scope,
+restrict its access to this service, and give it an appropriate expiration
+date. Add it to the GitHub repository as an Actions secret named
+`FASTLY_API_TOKEN`:
+
+```sh
+gh secret set FASTLY_API_TOKEN
+```
+
+The workflow can also be started manually from the repository's Actions page.
+
 On the first deployment, accept the generated `edgecompute.app` domain and the
 preconfigured `cloudflare_dns` backend. The backend must use:
 
