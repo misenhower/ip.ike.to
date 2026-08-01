@@ -14,7 +14,7 @@
     "node": ">=24.12"
   },
   "dependencies": {
-    "@fastly/js-compute": "^3.43.1"
+    "@fastly/js-compute": "^3.44.2"
   },
   "devDependencies": {
     "@fastly/cli": "^15.4.0"
