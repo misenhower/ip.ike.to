@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -41,6 +41,6 @@ jobs:
         run: npm test
 
       - name: Deploy to Fastly
-        uses: fastly/compute-actions@a25cf83ef5c19ef7d86f1eebffcd8f6c02ddc786 # v14
+        uses: fastly/compute-actions@v14
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
