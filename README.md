@@ -44,8 +44,9 @@ npx fastly auth login
 npm run deploy
 ```
 
-Pushes to `main` also run the tests and deploy automatically through GitHub
-Actions. Create a dedicated Fastly automation token with `global` scope,
+Pull requests run the tests and the Fastly Compute build through GitHub
+Actions, so Dependabot updates are checked before they merge. Pushes to `main`
+run the same checks and also deploy automatically. Create a dedicated Fastly automation token with `global` scope,
 restrict its access to this service, and give it an appropriate expiration
 date. Add it to the GitHub repository as an Actions secret named
 `FASTLY_API_TOKEN`:

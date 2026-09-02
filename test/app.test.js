@@ -169,6 +169,91 @@ describe("HTML route", () => {
   });
 });
 
+describe("request handling", () => {
+  it("answers HEAD requests with headers only", async () => {
+    const app = appWithHostname();
+    const getResponse = await app(request("/api/ip"), clientIp);
+    const headResponse = await app(
+      request("/api/ip", { method: "HEAD" }),
+      clientIp,
+    );
+
+    assert.equal(headResponse.status, 200);
+    assert.equal(
+      headResponse.headers.get("content-type"),
+      getResponse.headers.get("content-type"),
+    );
+    assert.equal(headResponse.headers.get("cache-control"), "private, no-store");
+    assert.equal(await headResponse.text(), "");
+  });
+
+  it("reports an unknown client IP when Fastly provides none", async () => {
+    const app = appWithHostname();
+    const textResponse = await app(request("/txt"));
+    const htmlResponse = await app(request("/"));
+    const body = await htmlResponse.text();
+
+    assert.equal(await textResponse.text(), "unknown");
+    assert.match(body, /<title>unknown<\/title>/);
+    assert.match(body, /<h1 class="ip" title="IP Address">/);
+    assert.doesNotMatch(body, /id="ipv4"/);
+    assert.doesNotMatch(body, /id="ipv6"/);
+  });
+
+  it("omits the user agent when the request has none", async () => {
+    const app = appWithHostname();
+    const noUserAgent = new Request("https://ip.ike.to/api");
+    const htmlRequest = new Request("https://ip.ike.to/");
+
+    assert.deepEqual(await (await app(noUserAgent, clientIp)).json(), {
+      ip: clientIp,
+      host: "example.test",
+      userAgent: null,
+    });
+    assert.doesNotMatch(
+      await (await app(htmlRequest, clientIp)).text(),
+      /class="user-agent"/,
+    );
+  });
+
+  it("hides connection details and sorts the remaining headers", async () => {
+    const response = await appWithHostname()(
+      request("/", {
+        headers: {
+          "x-real-ip": "198.51.100.9",
+          connection: "keep-alive",
+          "x-zulu": "last",
+          accept: "text/html",
+          "x-alpha": "first",
+        },
+      }),
+      clientIp,
+    );
+    const body = await response.text();
+    const keys = [...body.matchAll(/<td class="key">([^<]+)<\/td>/g)].map(
+      (match) => match[1],
+    );
+
+    assert.deepEqual(keys, ["accept", "user-agent", "x-alpha", "x-zulu"]);
+    assert.doesNotMatch(body, /keep-alive/);
+    assert.doesNotMatch(body, /198\.51\.100\.9/);
+  });
+
+  it("marks HTML and text responses as private", async () => {
+    const app = appWithHostname();
+
+    for (const path of ["/", "/txt", "/api", "/api/ip", "/missing"]) {
+      const response = await app(request(path), clientIp);
+
+      assert.equal(
+        response.headers.get("cache-control"),
+        "private, no-store",
+        `${path} should not be cached`,
+      );
+    }
+  });
+});
+
 describe("static assets", () => {
   it("keeps long values within narrow viewports", () => {
     assert.match(stylesheet, /font-size:\s*clamp\(/);
@@ -208,6 +293,7 @@ describe("static assets", () => {
 
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /^text\/css/);
+    assert.equal(response.headers.get("cache-control"), "public, max-age=3600");
     assert.equal(await response.text(), "body { color: #333; }");
   });
 });
@@ -216,9 +302,18 @@ describe("unmatched requests", () => {
   it("returns 404 for unknown paths and unsupported methods", async () => {
     const app = appWithHostname();
 
-    assert.equal((await app(request("/missing"), clientIp)).status, 404);
+    const missing = await app(request("/missing"), clientIp);
+
+    assert.equal(missing.status, 404);
+    assert.match(missing.headers.get("content-type"), /^text\/plain/);
+    assert.equal(await missing.text(), "Not Found");
+    assert.equal((await app(request("/api/ip/extra"), clientIp)).status, 404);
     assert.equal(
       (await app(request("/api", { method: "POST" }), clientIp)).status,
+      404,
+    );
+    assert.equal(
+      (await app(request("/txt", { method: "PUT" }), clientIp)).status,
       404,
     );
   });
