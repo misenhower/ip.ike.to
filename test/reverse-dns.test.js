@@ -84,6 +84,47 @@ describe("DNS-over-HTTPS resolver", () => {
     assert.equal(await emptyLookup("unknown"), null);
   });
 
+  it("returns null when the resolver throws or returns malformed data", async () => {
+    const throwingLookup = createDohResolver({
+      fetchDns: async () => {
+        throw new Error("backend unavailable");
+      },
+    });
+    const malformedLookup = createDohResolver({
+      fetchDns: async () => new Response("not json", { status: 200 }),
+    });
+    const errorStatusLookup = createDohResolver({
+      fetchDns: async () => Response.json({ Status: 3, Answer: [] }),
+    });
+
+    assert.equal(await throwingLookup("203.0.113.7"), null);
+    assert.equal(await malformedLookup("203.0.113.7"), null);
+    assert.equal(await errorStatusLookup("203.0.113.7"), null);
+  });
+
+  it("ignores answers that are not PTR records", async () => {
+    const reverseDns = createDohResolver({
+      fetchDns: async () =>
+        Response.json({
+          Status: 0,
+          Answer: [
+            { name: "7.113.0.203.in-addr.arpa.", type: 5, data: "alias.test." },
+            { name: "alias.test.", type: 12, data: "ptr.example.test." },
+          ],
+        }),
+    });
+    const cnameOnly = createDohResolver({
+      fetchDns: async () =>
+        Response.json({
+          Status: 0,
+          Answer: [{ name: "7.113.0.203.in-addr.arpa.", type: 5, data: "alias.test." }],
+        }),
+    });
+
+    assert.equal(await reverseDns("203.0.113.7"), "ptr.example.test");
+    assert.equal(await cnameOnly("203.0.113.7"), null);
+  });
+
   it("stops waiting when the resolver times out", async () => {
     const reverseDns = createDohResolver({
       fetchDns: async () => new Promise(() => {}),
